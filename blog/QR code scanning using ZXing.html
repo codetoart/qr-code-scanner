@@ -1,0 +1,101 @@
+<img class="aligncenter size-full wp-image-350720" src="https://codetoart.com/wp-content/uploads/2018/11/ZXing-logo.png" alt="ZXing" width="150" height="150" />
+
+In this tutorial, we will learn to integrate ZXing lib into an Android app. Let us first get some idea about ZXing.
+<h3 id="-zxing-https-github-com-zxing-zxing-"><a href="https://github.com/zxing/zxing">ZXing</a></h3>
+ZXing ("zebra crossing") is an open-source, multi-format 1D/2D barcode image processing library implemented in Java, with ports to other languages. ZXing is also hosted under <a href="https://opensource.google.com/projects/zxing">Google Open Source Project</a>.
+
+The latest version up to this date is <a href="https://github.com/zxing/zxing/releases/tag/zxing-3.3.3">3.3.3</a>. Modules in this release we need to focus on are -
+<table>
+    <thead>
+    <tr>
+        <th>Modules</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td><code>core</code></td>
+        <td>The core image decoding library, and test code (Java lib)</td>
+    </tr>
+    <tr>
+        <td><code>android</code></td>
+        <td>Android app also available on Play Store <a href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">Barcode Scanner</a></td>
+    </tr>
+    <tr>
+        <td><code>android-core</code></td>
+        <td>Android-related code shared among android, other Android apps</td>
+    </tr>
+    <tr>
+        <td><code>android-integration</code></td>
+        <td>Supports integration with Barcode Scanner via Intent</td>
+    </tr>
+    </tbody>
+</table>
+All the modules are available on Maven Central -
+
+<a href="https://search.maven.org/artifact/com.google.zxing/core/3.3.3/jar"><img src="https://img.shields.io/maven-central/v/com.google.zxing/core/3.3.3.svg?label=core" alt="core" /></a>
+<a href="https://search.maven.org/artifact/com.google.zxing/android-core/3.3.0/jar"><img src="https://img.shields.io/maven-central/v/com.google.zxing/android-core/3.3.0.svg?label=android-core" alt="android-core" /></a>
+<a href="https://search.maven.org/artifact/com.google.zxing/android-integration/3.3.0/jar"><img src="https://img.shields.io/maven-central/v/com.google.zxing/android-integration/3.3.0.svg?label=android-integration" alt="android-integration" /></a>
+<h3 id="integration">Integration</h3>
+Let's say we want to integrate ZXing in our app called <strong>QR Code Scanner Android</strong>. Now the problem is that <code>android</code> module is actually an Android application and not an Android library. So to use the ZXing lib as advocated by ZXing themselves, we have the following options -
+<ul>
+    <li>Install Barcode Scanner app first and then use <code>android-integration</code> and <code>android-core</code> for Integration.
+
+        Or</li>
+    <li>Integrate code using <code>android-integration</code> and <code>android-core</code>, if Barcode Scanner app is not installed then pop up would display to install the app first.</li>
+</ul>
+Obviously, both these options depend upon the Barcode Scanner app. So to overcome this dependency <a href="https://journeyapps.com/">JourneyApps</a> has come up with <a href="https://github.com/journeyapps/zxing-android-embedded"><strong>ZXing Android Embedded</strong></a> which is loosely based on the ZXing Android Barcode Scanner application but is not affiliated with the official ZXing project.
+
+ZXing Android Embedded is available on bintray -
+<a href="https://bintray.com/journeyapps/maven/zxing-android-embedded/3.6.0"><img src="https://img.shields.io/badge/ZXing%20Android%20Embedded-v3.6.0-0778B8.svg" alt="ZXing Android Embedded" /></a>
+
+So this tutorial is based on integrating the ZXing Android Embedded library in our QR Code Scanner app. You can find the <strong>source code</strong> of this tutorial on <a href="https://github.com/codetoart/qr-code-scanner">QR Code Scanner</a>. Let's start the integration. From version 3.6.0, only Android SDK 19+ is supported by default.
+<h4 id="dependency">Dependency</h4>
+<pre><code class="lang-groovy"><span class="hljs-keyword">repositories</span> {
+  jcenter()
+}
+
+<span class="hljs-keyword">dependencies</span> {
+  implementation <span class="hljs-string">'com.journeyapps:zxing-android-embedded:3.6.0'</span>
+}
+</code></pre>
+For Android 14+ support, see <a href="https://github.com/journeyapps/zxing-android-embedded#adding-aar-dependency-with-gradle">this</a> link.
+<h4 id="code">Code</h4>
+MainActivity.kt
+<pre><code class="lang-kotlin"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MainActivity</span> : <span class="hljs-type">AppCompatActivity</span></span>() {
+
+    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">onCreate</span><span class="hljs-params">(savedInstanceState: <span class="hljs-type">Bundle</span>?)</span></span> {
+        <span class="hljs-keyword">super</span>.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        button_scan_qr_code.setOnClickListener {
+            IntentIntegrator(<span class="hljs-keyword">this</span>).initiateScan()
+        }
+    }
+
+    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">onActivityResult</span><span class="hljs-params">(requestCode: <span class="hljs-type">Int</span>, resultCode: <span class="hljs-type">Int</span>, <span class="hljs-keyword">data</span>: <span class="hljs-type">Intent</span>?)</span></span> {
+        <span class="hljs-keyword">super</span>.onActivityResult(requestCode, resultCode, <span class="hljs-keyword">data</span>)
+
+        <span class="hljs-keyword">val</span> result = IntentIntegrator.parseActivityResult(requestCode, resultCode, <span class="hljs-keyword">data</span>)
+        <span class="hljs-keyword">if</span> (result != <span class="hljs-literal">null</span>) {
+            <span class="hljs-keyword">if</span> (result.contents == <span class="hljs-literal">null</span>) {
+                Toast.makeText(<span class="hljs-keyword">this</span>, <span class="hljs-string">"Cancelled"</span>, Toast.LENGTH_LONG).show()
+            } <span class="hljs-keyword">else</span> {
+                Toast.makeText(<span class="hljs-keyword">this</span>, <span class="hljs-string">"Scanned: "</span> + result.contents, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
+</code></pre>
+On click of <code>button_scan_qr_code</code>, <code>CaptureActivity</code> will start scanning using default camera. Once it scans any QR code, it sends back the result to <code>onActivityResult</code> of <code>MainActivity</code>.
+
+ZXing also provides online <a href="https://zxing.appspot.com/generator">QR Code Generator</a>. Enter the required fields, generate and scan it to get the results.
+
+ZXing Android Embedded lib also provides various customization -
+<ul>
+    <li><a href="https://github.com/journeyapps/zxing-android-embedded#usage-with-intentintegrator">Customizing <code>IntentIntegrator</code> class</a></li>
+    <li><a href="https://github.com/journeyapps/zxing-android-embedded/blob/master/EMBEDDING.md">Directly embedding custom components in app</a></li>
+</ul>
+For more advanced options do have a look at their <a href="https://github.com/journeyapps/zxing-android-embedded/blob/master/sample/src/main/java/example/zxing/MainActivity.java">Sample application</a>.
+
+That's it for this tutorial. Thanks to the ZXing authors for Java library and ZXing Android Embedded to make this integration easy. Enjoy scanning QR code. 🙂
